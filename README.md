@@ -3,5 +3,6 @@ Web based wireguard config generator for general and mikrotik routers.
 
 
 Based on
+- https://github.com/Oschangkai/wg-config-generator
 - https://github.com/dbca-wa/wg-webcfg
 - https://github.com/kiler129/mikrotik-auto-wireguard
