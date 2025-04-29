@@ -4,258 +4,230 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+  <link rel="stylesheet" href="css/bulma.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
   <title>VPN Config Generator</title>
 </head>
 
 <body>
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container">
+        <h1 class="title">WireGuard Config Generator</h1>
+        <p class="subtitle">快速生成简易的 WireGuard 服务器和客户端配置文件</p>
+      </div>
+    </div>
+  </section>
+
   <section class="section">
     <div id="app" class="container">
       <div class="columns">
-        <div class="column">
-          <h2 class="title">Wireguard Config Generator</h2>
-          <div class="buttons">
-            <button class="button is-primary" @click="updateclients">Generate</button>
-            <button class="button is-warning" @click="modalactive = 'is-active'">Import Server Config</button>
-            <button class="button is-warning" v-if="!dlbuttonshidden" @click="downloadclients">Download Client Config</button>
-            <button class="button is-info" v-if="!dlbuttonshidden" @click="downloadqrcodes">Download Client QR Codes</button>
-          </div>
-          <article class="panel">
-            <table class="table">
-              <tr>
-                <td>Server:<br> <input v-model="server"></td>
-                <td>Port:<br> <input v-model="port"></td>
-                <td>Interface Name:<br> <input v-model="interfacename"></td>
-              </tr>
-              <tr>
-                <td>Net:<br> <input v-model="network" size="8"> </td>
-                <td>1stIP:<br> <input v-model="startip" size="1"></td>
-                <td>Clients:<br> <input v-model="clientcount" size="3"></td>
-              </tr>
-              <tr>
-                <td>Allowed Net(s):<br> <input v-model="allowednets" size="40"></td>
-              </tr>
-              <tr>
-                <td colspan="3">ServerPrivateKey:<br> <input v-model="serverkeys.privateKey" size="50"></td>
-              </tr>
-              <tr>
-                <td colspan="3">ServerPublicKey:<br> <input v-model="serverkeys.publicKey" size="50"></td>
-              </tr>
-            </table>
-          </article>
-          <article class="panel">
-            <p class="panel-heading">Server config {{ server }}:{{ port }}</p>
-            <p class="panel-block">Mikrotik</p>
-            <p class="panel-block" >
-              <code style="font-size:small;"><span @click="select">
-                /interface wireguard<br>
-                add listen-port={{ port }} mtu=1420 name={{interfacename}} private-key="{{ serverkeys.privateKey }}"<br><br>
-
-                /ip firewall filter<br>
-                add action=accept chain=input comment="Allow Wireguard from All" dst-port={{port}} protocol=udp<br><br>
-
-                /ip address <br>
-                add address={{ network }}.1/24 comment="Wireguard Interface" interface={{ interfacename }} network={{ network }}.0<br><br>
-
-                /interface wireguard peers<br>
-                <span v-for="line in oldconfig">{{ line }}<br></span>
-                  <span v-for="(value, client) in clients"><br>
-                  add allowed-address={{ network }}.{{ client }}/32 comment="{{ value.name }}" endpoint-address={{ network }}.{{ client }} interface={{interfacename}} public-key="{{ value.publicKey }}"
-                  </span>
-                </span>
-              </code>
-              <p class="panel-block">Default</p>
-              <p class="panel-block">
-                <code style="font-size:small;"><span @click="select">[Interface]<br>
-                  Address = {{ network }}.1/24<br>
-                  ListenPort = {{ port }}<br>
-                  PrivateKey = {{ serverkeys.privateKey }}<br>
-                  # PublicKey = {{ serverkeys.publicKey }}<br>
-                  # Server = {{ server }}<br>
-                  <span v-for="line in oldconfig">{{ line }}<br></span>
-                    <span v-for="(value, client) in clients"><br>
-                    [Peer]<br>
-                    ## {{ value.name }}<br>
-                    AllowedIPs = {{ network }}.{{ client }}/32<br>
-                    PublicKey = {{ value.publicKey }}<br>
-                    # PrivateKey = {{ value.privateKey }}<br>
-                    </span>
-                  </span>
-                </code>
-              </p>
+        <div class="column is-6">
+          <div class="card">
+            <div class="card-content">
+              <h2 class="title is-4">服务器配置</h2>
+              <div class="buttons">
+                <button class="button is-primary" @click="updateclients">
+                  <span class="icon"><i class="fas fa-sync"></i></span>
+                  <span>生成配置</span>
+                </button>
+                <button class="button is-info" @click="modalactive = 'is-active'">
+                  <span class="icon"><i class="fas fa-file-import"></i></span>
+                  <span>导入服务器配置</span>
+                </button>
+                <button class="button is-warning" v-if="!dlbuttonshidden" @click="downloadclients">
+                  <span class="icon"><i class="fas fa-download"></i></span>
+                  <span>下载客户端配置</span>
+                </button>
+                <button class="button is-danger" @click="clearCache">
+                  <span class="icon"><i class="fas fa-trash"></i></span>
+                  <span>清空缓存</span>
+                </button>
+              </div>
               
-            </p>
-          </article>
-        </div>
-        <div class="column">
-          <article class="panel">
-            <p class="panel-heading">Client configs (first ip: {{network}}.{{startip}}, count: {{ clientcount }})</p>
-            <div class="panel-block" v-for="(value, client) in clients">
-              <canvas :id="'canvas'+client"></canvas>
-              <div>
-                <input v-model="value.name">
-                <code class="panel-block clients-code" style="font-size:small;" :id="'code'+client"><span @click="select">[Interface]<br>
-                ## {{ value.name }}<br>
-                Address = {{ network }}.{{ client }}/24<br>
-                PrivateKey = {{ value.privateKey }}<br>
-                [Peer]<br>
-                PublicKey = {{ serverkeys.publicKey }}<br>
-                AllowedIPs = {{ network }}.1/32,{{allowednets}} <br>
-                Endpoint = {{ server }}:{{ port }} <br>
-                PersistentKeepalive = 10
-                </span></code>
+              <div class="field is-grouped is-grouped-multiline">
+                <div class="control">
+                  <label class="label">服务器地址</label>
+                  <input class="input" v-model="server" placeholder="vpn.example.com">
+                </div>
+                <div class="control">
+                  <label class="label">端口</label>
+                  <input class="input" v-model="port" placeholder="51820">
+                </div>
+                <div class="control">
+                  <label class="label">接口名称</label>
+                  <input class="input" v-model="interfacename" placeholder="wg0">
+                </div>
               </div>
+
+              <div class="field is-grouped is-grouped-multiline">
+                <div class="control">
+                  <label class="label">网络</label>
+                  <input class="input" v-model="network" placeholder="10.0.0">
+                </div>
+                <div class="control">
+                  <label class="label">起始IP</label>
+                  <input class="input" v-model="startip" placeholder="2">
+                </div>
+                <div class="control">
+                  <label class="label">客户端数量</label>
+                  <input class="input" v-model="clientcount" placeholder="2">
+                </div>
               </div>
-          </article>
+
+              <div class="field">
+                <label class="label">允许的网络</label>
+                <input class="input" v-model="allowednets" placeholder="192.168.1.0/24,192.168.0.0/24">
+              </div>
+
+              <div class="field">
+                <label class="label">服务器私钥</label>
+                <input class="input" v-model="serverkeys.privateKey">
+              </div>
+
+              <div class="field">
+                <label class="label">服务器公钥</label>
+                <input class="input" v-model="serverkeys.publicKey">
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-content">
+              <h2 class="title is-4">服务器配置</h2>
+              <div class="tab-content">
+                <div class="tab-pane">
+                  <pre><code><span @click="select">[Interface]
+Address = {{ network }}.1/24
+ListenPort = {{ port }}
+PrivateKey = {{ serverkeys.privateKey }}
+# PublicKey = {{ serverkeys.publicKey }}
+# Server = {{ server }}
+<span v-for="line in oldconfig">{{ line }}
+</span>
+<span v-for="(value, client) in clients">
+[Peer]
+## {{ value.name }}
+AllowedIPs = {{ network }}.{{ client }}/32
+PublicKey = {{ value.publicKey }}
+# PrivateKey = {{ value.privateKey }}
+</span></span></code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-6">
+          <div class="card">
+            <div class="card-content">
+              <h2 class="title is-4">客户端配置</h2>
+              <div v-for="(value, client) in clients" class="client-config">
+                <div class="client-name">
+                  <input class="input" v-model="value.name" placeholder="客户端名称">
+                  <div class="buttons are-small">
+                    <button class="button is-info" @click="copyConfig(client)">
+                      <span class="icon"><i class="fas fa-copy"></i></span>
+                      <span>复制配置</span>
+                    </button>
+                    <button class="button is-danger" @click="deleteConfig(client)">
+                      <span class="icon"><i class="fas fa-trash"></i></span>
+                      <span>删除</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="client-qr">
+                  <canvas :id="'canvas'+client"></canvas>
+                </div>
+                <div class="client-code">
+                  <pre><code :id="'code'+client"><span @click="select">[Interface]
+## {{ value.name }}
+Address = {{ network }}.{{ client }}/32
+PrivateKey = {{ value.privateKey }}
+
+[Peer]
+PublicKey = {{ serverkeys.publicKey }}
+AllowedIPs = {{ network }}.0/24{{ allowednets ? ',' + allowednets : '' }}
+Endpoint = {{ server }}:{{ port }}
+PersistentKeepalive = 25</span></code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="column">
-        <p>Download Links:</p>
-        <ul>
-          <li>Windows: <a href="https://download.wireguard.com/windows-client/wireguard-installer.exe">https://download.wireguard.com/windows-client/wireguard-installer.exe</a></li>
-          <li>Android: <a href="https://play.google.com/store/apps/details?id=com.wireguard.android">https://play.google.com/store/apps/details?id=com.wireguard.android</a></li>
-          <li>iOS: <a href="https://apps.apple.com/app/id1441195209">https://apps.apple.com/app/id1441195209</a></li>
-          <li>macOS: <a href="https://apps.apple.com/app/id1451685025">https://apps.apple.com/app/id1451685025</a></li>
-          <li>Others: <a href="https://www.wireguard.com/install/">https://www.wireguard.com/install/</a></li>
-        </ul>
-        <br>
+
+      <div class="download-links">
+        <h3 class="title is-5">下载客户端</h3>
+        <div class="columns">
+          <div class="column">
+            <a href="https://download.wireguard.com/windows-client/wireguard-installer.exe">
+              <span class="icon"><i class="fab fa-windows"></i></span>
+              Windows
+            </a>
+          </div>
+          <div class="column">
+            <a href="https://play.google.com/store/apps/details?id=com.wireguard.android">
+              <span class="icon"><i class="fab fa-android"></i></span>
+              Android
+            </a>
+          </div>
+          <div class="column">
+            <a href="https://apps.apple.com/app/id1441195209">
+              <span class="icon"><i class="fab fa-apple"></i></span>
+              iOS
+            </a>
+          </div>
+          <div class="column">
+            <a href="https://apps.apple.com/app/id1451685025">
+              <span class="icon"><i class="fab fa-apple"></i></span>
+              macOS
+            </a>
+          </div>
+          <div class="column">
+            <a href="https://www.wireguard.com/install/">
+              <span class="icon"><i class="fas fa-download"></i></span>
+              其他平台
+            </a>
+          </div>
+        </div>
       </div>
-      <div class="column">
-        <p>Credit to</p>
-        <a href="https://github.com/dbca-wa/wg-webcfg">https://github.com/dbca-wa/wg-webcfg</a>
-        <br>
-        <a href="https://github.com/kiler129/mikrotik-auto-wireguard">https://github.com/kiler129/mikrotik-auto-wireguard</a>
-      </div>
+
       <div class="modal" :class="modalactive">
         <div class="modal-background"></div>
         <div class="modal-card">
           <header class="modal-card-head">
-            <p class="modal-card-title">Import server config</p>
+            <p class="modal-card-title">导入服务器配置</p>
             <button class="delete" aria-label="close" @click="modalactive = null"></button>
           </header>
           <section class="modal-card-body">
-            <textarea id="textimport" class="textarea" placeholder="Paste server config here"></textarea>
+            <textarea id="textimport" class="textarea" placeholder="在此粘贴服务器配置"></textarea>
           </section>
           <footer class="modal-card-foot">
-            <button class="button is-success" @click="importconfig">Import</button>
-            <button class="button" @click="modalactive = null">Cancel</button>
+            <button class="button is-success" @click="importconfig">导入</button>
+            <button class="button" @click="modalactive = null">取消</button>
           </footer>
         </div>
       </div>
     </div>
   </section>
-  <script src="https://unpkg.com/vue@2.6.12/dist/vue.js"></script>
-  <script src="https://unpkg.com/qrcode@1.4.4/build/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js" integrity="sha512-csNcFYJniKjJxRWRV1R7fvnXrycHP6qDR21mgz1ZP55xY5d+aHLfo9/FcGDQLfn2IfngbAHd8LdfsagcCqgTcQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="wireguard.js"></script>
-  <script>
-    new Vue({
-      el: "#app",
-      data() {
-        return {
-          server: "vpn.example.com",
-          port: 13231,
-          network: "192.168.0",
-          startip: 2,
-          clientcount: 3,
-          allowednets: "192.168.1.0/24,192.168.0.0/24",
-          interfacename: "wg0",
-          oldconfig: [],
-          clients: {},
-          modalactive: null,
-          dlbuttonshidden: true,
-          serverkeys: wireguard.generateKeypair()
-        };
-      },
-      methods: {
-        select(event) {
-          r = document.createRange(); r.selectNode(event.target.closest("span"));
-          s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-        },
-        importconfig(event) {
-          var data = this;
-          var config = document.getElementById("textimport").value.split( /\n/ ) // split lines
-          config.map( line => line.trim() ) // cleanup whitespace
-          var section = null;
-          data.oldconfig = [];
-          config.forEach(line => {
-            if ( line.length ) {
-              if ( line.startsWith("[") ) { 
-                section = line;
-                if (section == "[Peer]") {
-                  data.oldconfig.push("");
-                  data.oldconfig.push(section);
-                } 
-              } else { 
-                var parts = line.split("=");
-                var key = parts.shift().trim();
-                var value = parts.join("=").trim();
-                switch (section + key) {
-                  case '[Interface]Address': data.network = value.split(".").slice(0,3).join("."); break;
-                  case '[Interface]ListenPort': data.port = value; break;
-                  case '[Interface]PrivateKey': data.serverkeys.privateKey = value; break;
-                  case '[Interface]# PublicKey': data.serverkeys.publicKey = value; break;
-                  case '[Interface]# Server': data.server = value; break;
-                  default:
-                    data.oldconfig.push(line)
-                    if (section + key == "[Peer]AllowedIPs") {
-                      var lastip = Math.floor(value.split(".").slice(-1)[0].split("/")[0])
-                      if (lastip + 1 > data.startip) {
-                        data.startip = lastip + 1;
-                      }
-                    }
-                } 
-              }
-            } 
-          })
-          data.modalactive = null;
-        },
-        updateclients(event) {
-          this.clients = this.makeclients;
-          var clients = this.clients;
-          this.dlbuttonshidden = false;
 
-          setTimeout(function() {
-            for (client in clients) {
-              QRCode.toCanvas(document.getElementById('canvas' + client), document.getElementById('code' + client).innerText)
-            }
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p>
+        <strong>WireGuard Config Generator</strong> 基于以下项目构建：
+        <a href="https://github.com/dbca-wa/wg-webcfg">wg-webcfg</a> 和
+        <a href="https://github.com/kiler129/mikrotik-auto-wireguard">mikrotik-auto-wireguard</a>
+      </p>
+    </div>
+  </footer>
 
-          });
-        },
-        downloadclients(event) {
-          for (i = this.startip; i < this.startip + this.clientcount; i++) {
-
-            var blob = new Blob(["[Interface]\n## "+this.clients[i].name+"\nAddress = "+this.network+"."+i+"/24\nPrivateKey = "+this.clients[i].privateKey+"\n\n[Peer]\nPublicKey =  "+this.serverkeys.publicKey+"\nAllowedIPs = "+this.network+".1/32,"+this.allowednets+"\nEndpoint = "+this.server+":"+this.port+" \nPersistentKeepalive = 10"], {
-                type: "text/plain;charset=utf-8;",
-            });
-            saveAs(blob, this.clients[i].name + ".conf");
-          }
-        },
-        downloadqrcodes(event) {
-          for (w = this.startip; w < this.startip + this.clientcount; w++) {
-            var canvas = document.getElementById("canvas"+w);
-            download(canvas, this.clients[w].name);
-          }
-        }
-      },
-      computed: {
-        makeclients() {
-          var c = {};
-          for (client in [...Array(Math.floor(this.clientcount)).keys()]) {
-            finaloctet = Math.floor(client) + Math.floor(this.startip);
-            c[finaloctet] = wireguard.generateKeypair();
-            c[finaloctet].name = "Client " + finaloctet;
-          }
-          return c
-        }
-      }
-    });
-    function download(canvas, name) {
-      canvas.toBlob(function(blob) {
-          saveAs(blob, name + ".png");
-      })
-    }
-  </script>
+  <script src="js/vue.js"></script>
+  <script src="js/qrcode.min.js"></script>
+  <script src="js/FileSaver.min.js"></script>
+  <script src="js/wireguard.js"></script>
+  <script src="js/app.js"></script>
 </body>
 
 </html>

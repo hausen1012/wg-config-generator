@@ -1,0 +1,141 @@
+body {
+  background-color: #f5f5f5;
+}
+
+.hero {
+  background: linear-gradient(135deg, #00d1b2 0%, #3273dc 100%);
+  color: white;
+  padding: 1rem 0;
+}
+
+.hero .title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.hero .subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.card {
+  box-shadow: 0 2px 3px rgba(10,10,10,.1);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(10,10,10,.2);
+}
+
+.panel {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.panel-heading {
+  background-color: #3273dc;
+  color: white;
+}
+
+.button {
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.code-block {
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.download-links {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 6px;
+  margin-top: 2rem;
+}
+
+.download-links a {
+  color: #3273dc;
+  text-decoration: none;
+}
+
+.download-links a:hover {
+  color: #00d1b2;
+}
+
+.client-config {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid #dbdbdb;
+  border-radius: 4px;
+}
+
+.client-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.client-name .input {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.client-name .buttons {
+  white-space: nowrap;
+}
+
+.client-qr {
+  /* margin: 1rem 0; */
+  text-align: center;
+}
+
+.client-code {
+  background-color: #f5f5f5;
+  padding: 1rem 1rem;
+  border-radius: 4px;
+}
+
+.client-code pre {
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+
+.client-code code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #4a4a4a;
+}
+
+.field.is-grouped-multiline {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.field.is-grouped-multiline .control {
+  flex: 1;
+  margin-right: 0.75rem;
+}
+
+.field.is-grouped-multiline .control:last-child {
+  margin-right: 0;
+}
+
+.field.is-grouped-multiline .control .input {
+  width: 100%;
+}
+
+.footer {
+  background-color: #fafafa;
+  padding: 3rem 1.5rem !important;
+}

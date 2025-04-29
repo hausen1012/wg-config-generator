@@ -1,0 +1,45 @@
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.icon-sync {
+  background-image: url('../images/icons/sync.svg');
+}
+
+.icon-file-import {
+  background-image: url('../images/icons/file-import.svg');
+}
+
+.icon-download {
+  background-image: url('../images/icons/download.svg');
+}
+
+.icon-qrcode {
+  background-image: url('../images/icons/qrcode.svg');
+}
+
+.icon-windows {
+  background-image: url('../images/icons/windows.svg');
+}
+
+.icon-android {
+  background-image: url('../images/icons/android.svg');
+}
+
+.icon-apple {
+  background-image: url('../images/icons/apple.svg');
+}
+
+.icon-copy {
+  background-image: url('../images/icons/copy.svg');
+}
+
+.icon-delete {
+  background-image: url('../images/icons/delete.svg');
+} 
