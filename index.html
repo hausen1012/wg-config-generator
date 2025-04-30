@@ -26,7 +26,7 @@
         <div class="column is-6">
           <div class="card">
             <div class="card-content">
-              <h2 class="title is-4">服务器配置</h2>
+              <h2 class="title is-4">服务器模式</h2>
               <div class="buttons">
                 <button class="button is-primary" @click="updateclients">
                   <span class="icon"><i class="fas fa-sync"></i></span>
@@ -105,22 +105,10 @@
               <h2 class="title is-4">服务器配置</h2>
               <div class="tab-content">
                 <div class="tab-pane">
-                  <pre><code><span @click="select">[Interface]
-Address = {{ network }}.1/24
-ListenPort = {{ port }}
-PrivateKey = {{ serverkeys.privateKey }}
-# PublicKey = {{ serverkeys.publicKey }}
-# Server = {{ server }}
-<span v-for="line in oldconfig">{{ line }}
-</span>
-<span v-for="(value, client) in clients">
-[Peer]
-## {{ value.name }}
-AllowedIPs = {{ network }}.{{ client }}/32
-PublicKey = {{ value.publicKey }}
-<template v-if="usePresharedKey">PresharedKey = {{ value.presharedKey }}</template>
-# PrivateKey = {{ value.privateKey }}
-</span></span></code></pre>
+                  <server-config
+                    v-bind="serverConfig"
+                    @select="select"
+                  ></server-config>
                 </div>
               </div>
             </div>
@@ -131,35 +119,28 @@ PublicKey = {{ value.publicKey }}
           <div class="card">
             <div class="card-content">
               <h2 class="title is-4">客户端配置</h2>
-              <div v-for="(value, client) in clients" class="client-config">
+              <div v-for="config in clientConfigs" class="client-config">
                 <div class="client-name">
-                  <input class="input" v-model="value.name" placeholder="客户端名称">
+                  <input class="input" v-model="config.client.name" placeholder="客户端名称">
                   <div class="buttons are-small">
-                    <button class="button is-info" @click="copyConfig(client)">
+                    <button class="button is-info" @click="copyConfig(config.clientId)">
                       <span class="icon"><i class="fas fa-copy"></i></span>
                       <span>复制配置</span>
                     </button>
-                    <button class="button is-danger" @click="deleteConfig(client)">
+                    <button class="button is-danger" @click="deleteConfig(config.clientId)">
                       <span class="icon"><i class="fas fa-trash"></i></span>
                       <span>删除</span>
                     </button>
                   </div>
                 </div>
                 <div class="client-qr">
-                  <canvas :id="'canvas'+client"></canvas>
+                  <canvas :id="'canvas'+config.clientId"></canvas>
                 </div>
                 <div class="client-code">
-                  <pre><code :id="'code'+client"><span @click="select">[Interface]
-## {{ value.name }}
-Address = {{ network }}.{{ client }}/32
-PrivateKey = {{ value.privateKey }}
-
-[Peer]
-PublicKey = {{ serverkeys.publicKey }}
-<template v-if="usePresharedKey">PresharedKey = {{ value.presharedKey }}
-</template>AllowedIPs = {{ network }}.0/24{{ allowednets ? ',' + allowednets : '' }}
-Endpoint = {{ server }}:{{ port }}
-PersistentKeepalive = 25</span></code></pre>
+                  <client-config
+                    v-bind="config"
+                    @select="select"
+                  ></client-config>
                 </div>
               </div>
             </div>
@@ -236,6 +217,7 @@ PersistentKeepalive = 25</span></code></pre>
   <script src="js/qrcode.min.js"></script>
   <script src="js/FileSaver.min.js"></script>
   <script src="js/wireguard.js"></script>
+  <script src="js/components.js"></script>
   <script src="js/app.js"></script>
 </body>
 

@@ -68,8 +68,12 @@ new Vue({
       this.serverkeys = wireguard.generateKeypair();
     },
     select(event) {
-      r = document.createRange(); r.selectNode(event.target.closest("span"));
-      s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      if (!event || !event.target) return;
+      const range = document.createRange();
+      range.selectNodeContents(event.target);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
     },
     importconfig(event) {
       var data = this;
@@ -152,18 +156,18 @@ PersistentKeepalive = 25`;
         download(canvas, this.clients[w].name);
       }
     },
-    copyConfig(client) {
-      const codeElement = document.getElementById('code' + client);
+    copyConfig(clientId) {
+      const code = document.getElementById('code' + clientId);
       const range = document.createRange();
-      range.selectNode(codeElement);
+      range.selectNodeContents(code);
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(range);
       document.execCommand('copy');
       selection.removeAllRanges();
     },
-    deleteConfig(client) {
-      this.$delete(this.clients, client);
+    deleteConfig(clientId) {
+      Vue.delete(this.clients, clientId);
     },
     saveData() {
       const dataToSave = {
@@ -188,14 +192,28 @@ PersistentKeepalive = 25`;
     }
   },
   computed: {
-    makeclients() {
-      var c = {};
-      for (client in [...Array(Math.floor(this.clientcount)).keys()]) {
-        finaloctet = Math.floor(client) + Math.floor(this.startip);
-        c[finaloctet] = wireguard.generateKeypair();
-        c[finaloctet].name = "Client " + finaloctet;
-      }
-      return c
+    serverConfig() {
+      return {
+        network: this.network,
+        port: this.port,
+        serverkeys: this.serverkeys,
+        server: this.server,
+        oldconfig: this.oldconfig,
+        clients: this.clients,
+        usePresharedKey: this.usePresharedKey
+      };
+    },
+    clientConfigs() {
+      return Object.entries(this.clients).map(([id, client]) => ({
+        client,
+        clientId: id,
+        network: this.network,
+        serverkeys: this.serverkeys,
+        server: this.server,
+        port: this.port,
+        allowednets: this.allowednets,
+        usePresharedKey: this.usePresharedKey
+      }));
     }
   },
   // 添加watch来监听数据变化并保存
