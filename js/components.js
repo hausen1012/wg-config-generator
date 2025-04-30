@@ -61,6 +61,7 @@ Vue.component('peer-config', {
 ## {{ config.name }}
 Address = {{ config.address }}
 PrivateKey = {{ config.privateKey }}
+ListenPort = {{ config.port }}
 
 <template v-for="peer in config.peers">[Peer]
 ## {{ peer.name }}

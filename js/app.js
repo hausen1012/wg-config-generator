@@ -424,6 +424,7 @@ PersistentKeepalive = 25`;
           name: currentClient.name,
           privateKey: currentClient.privateKey,
           address: `${this.peerNetwork}.${currentId}/32`,
+          port: currentClient.port,
           peers
         });
       }
