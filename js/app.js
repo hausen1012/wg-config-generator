@@ -25,12 +25,12 @@ new Vue({
       peerAllowednets: "",
       peerEndpoints: [
         {
-          name: "节点 1",
+          name: "Client 1",
           address: "",
           port: 51820
         },
         {
-          name: "节点 2",
+          name: "Client 2",
           address: "",
           port: 51820
         }
@@ -88,12 +88,12 @@ new Vue({
       if (newMode === 'peer' && this.peerEndpoints.length === 0) {
         this.peerEndpoints = [
           {
-            name: "节点 1",
+            name: "Client 1",
             address: "",
             port: 51820
           },
           {
-            name: "节点 2",
+            name: "Client 2",
             address: "",
             port: 51820
           }
@@ -104,7 +104,7 @@ new Vue({
     },
     addPeer() {
       this.peerEndpoints.push({
-        name: `节点 ${this.peerEndpoints.length + 1}`,
+        name: `Client ${this.peerEndpoints.length + 1}`,
         address: '',
         port: 51820
       });
@@ -193,12 +193,12 @@ new Vue({
         this.peerAllowednets = "";
         this.peerEndpoints = [
           {
-            name: "节点 1",
+            name: "Client 1",
             address: "",
             port: 51820
           },
           {
-            name: "节点 2",
+            name: "Client 2",
             address: "",
             port: 51820
           }
