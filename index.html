@@ -7,6 +7,69 @@
   <link rel="stylesheet" href="css/bulma.min.css">
   <link rel="stylesheet" href="css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .peers-list .peer-item {
+      margin-bottom: 1rem;
+      padding: 1rem;
+    }
+    .peers-list .field.is-grouped {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .peers-list .control {
+      margin-right: 0 !important;
+      margin-bottom: 0 !important;
+    }
+    .peers-list .input {
+      max-width: 200px;
+    }
+    .peers-list .input[placeholder="节点名称"] {
+      width: 150px;
+    }
+    .peers-list .input[placeholder="vpn.example.com"] {
+      width: 200px;
+    }
+    .peers-list .input[placeholder="51820"] {
+      width: 100px;
+    }
+    @media screen and (max-width: 768px) {
+      .peers-list .input {
+        width: 100% !important;
+        max-width: none;
+      }
+      .peers-list .field.is-grouped {
+        display: block;
+      }
+      .peers-list .control {
+        margin-bottom: 0.5rem !important;
+      }
+    }
+    .table-container {
+      margin-top: 1rem;
+    }
+    .table td {
+      vertical-align: middle;
+      padding: 0.5rem;
+    }
+    .table th {
+      vertical-align: middle;
+    }
+    .table td .input {
+      margin-bottom: 0;
+    }
+    .table td:last-child {
+      width: 40px;
+      text-align: center;
+    }
+    @media screen and (max-width: 768px) {
+      .table-container {
+        overflow-x: auto;
+      }
+      .table {
+        min-width: 600px;
+      }
+    }
+  </style>
   <title>WireGuard Config Generator</title>
 </head>
 
@@ -26,81 +89,186 @@
         <div class="column is-6">
           <div class="card">
             <div class="card-content">
-              <h2 class="title is-4">服务器模式</h2>
-              <div class="buttons">
-                <button class="button is-primary" @click="updateclients">
-                  <span class="icon"><i class="fas fa-sync"></i></span>
-                  <span>生成配置</span>
-                </button>
-                <button class="button is-info" @click="modalactive = 'is-active'">
-                  <span class="icon"><i class="fas fa-file-import"></i></span>
-                  <span>导入服务器配置</span>
-                </button>
-                <button class="button is-warning" v-if="!dlbuttonshidden" @click="downloadclients">
-                  <span class="icon"><i class="fas fa-download"></i></span>
-                  <span>下载客户端配置</span>
-                </button>
-                <button class="button is-danger" @click="clearCache">
-                  <span class="icon"><i class="fas fa-trash"></i></span>
-                  <span>清空缓存</span>
-                </button>
-              </div>
-              
-              <div class="field is-grouped is-grouped-multiline">
-                <div class="control">
-                  <label class="label">服务器地址</label>
-                  <input class="input" v-model="server" placeholder="vpn.example.com">
-                </div>
-                <div class="control">
-                  <label class="label">端口</label>
-                  <input class="input" v-model="port" placeholder="51820">
-                </div>
-                <div class="control">
-                  <label class="label">接口名称</label>
-                  <input class="input" v-model="interfacename" placeholder="wg0">
-                </div>
+              <div class="tabs">
+                <ul>
+                  <li :class="{ 'is-active': mode === 'server' }">
+                    <a @click="switchMode('server')">服务器模式</a>
+                  </li>
+                  <li :class="{ 'is-active': mode === 'peer' }">
+                    <a @click="switchMode('peer')">对等模式</a>
+                  </li>
+                </ul>
               </div>
 
-              <div class="field is-grouped is-grouped-multiline">
-                <div class="control">
-                  <label class="label">网络</label>
-                  <input class="input" v-model="network" placeholder="10.0.0">
+              <template v-if="mode === 'server'">
+                <h2 class="title is-4">服务器配置</h2>
+                <div class="buttons">
+                  <button class="button is-primary" @click="updateclients">
+                    <span class="icon"><i class="fas fa-sync"></i></span>
+                    <span>生成配置</span>
+                  </button>
+                  <button class="button is-info" @click="modalactive = 'is-active'">
+                    <span class="icon"><i class="fas fa-file-import"></i></span>
+                    <span>导入服务器配置</span>
+                  </button>
+                  <button class="button is-warning" v-if="!dlbuttonshidden" @click="downloadclients">
+                    <span class="icon"><i class="fas fa-download"></i></span>
+                    <span>下载客户端配置</span>
+                  </button>
+                  <button class="button is-danger" @click="clearCache">
+                    <span class="icon"><i class="fas fa-trash"></i></span>
+                    <span>清空缓存</span>
+                  </button>
                 </div>
-                <div class="control">
-                  <label class="label">起始IP</label>
-                  <input class="input" v-model="startip" placeholder="2">
+                
+                <div class="field is-grouped is-grouped-multiline">
+                  <div class="control">
+                    <label class="label">服务器地址</label>
+                    <input class="input" :class="{'is-danger': !server}" v-model="server" placeholder="vpn.example.com" required>
+                  </div>
+                  <div class="control">
+                    <label class="label">端口</label>
+                    <input class="input" :class="{'is-danger': !port || port < 1 || port > 65535}" v-model="port" placeholder="51820" type="number" min="1" max="65535" required>
+                  </div>
+                  <div class="control">
+                    <label class="label">接口名称</label>
+                    <input class="input" v-model="interfacename" placeholder="wg0">
+                  </div>
                 </div>
-                <div class="control">
-                  <label class="label">客户端数量</label>
-                  <input class="input" v-model="clientcount" placeholder="3">
+
+                <div class="field is-grouped is-grouped-multiline">
+                  <div class="control">
+                    <label class="label">网络</label>
+                    <input class="input" :class="{'is-danger': !network}" v-model="network" placeholder="10.0.0" required>
+                  </div>
+                  <div class="control">
+                    <label class="label">起始IP</label>
+                    <input class="input" :class="{'is-danger': !startip || startip < 2 || startip > 254}" v-model="startip" placeholder="2" type="number" min="2" max="254" required>
+                  </div>
+                  <div class="control">
+                    <label class="label">客户端数量</label>
+                    <input class="input" :class="{'is-danger': !clientcount || clientcount < 1 || clientcount > 254 || (startip + clientcount - 1) > 254}" v-model="clientcount" placeholder="3" type="number" min="1" max="254" required>
+                  </div>
                 </div>
-              </div>
 
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" v-model="usePresharedKey">
-                  启用预共享密钥
-                </label>
-              </div>
+                <div class="field">
+                  <label class="checkbox">
+                    <input type="checkbox" v-model="usePresharedKey">
+                    启用预共享密钥
+                  </label>
+                </div>
 
-              <div class="field">
-                <label class="label">允许的网络</label>
-                <input class="input" v-model="allowednets" placeholder="192.168.1.0/24,192.168.0.0/24">
-              </div>
+                <div class="field">
+                  <label class="label">允许的网络</label>
+                  <input class="input" v-model="allowednets" placeholder="192.168.1.0/24,192.168.0.0/24">
+                </div>
 
-              <div class="field">
-                <label class="label">服务器私钥</label>
-                <input class="input" v-model="serverkeys.privateKey">
-              </div>
+                <div class="field">
+                  <label class="label">服务器私钥</label>
+                  <input class="input" v-model="serverkeys.privateKey">
+                </div>
 
-              <div class="field">
-                <label class="label">服务器公钥</label>
-                <input class="input" v-model="serverkeys.publicKey">
-              </div>
+                <div class="field">
+                  <label class="label">服务器公钥</label>
+                  <input class="input" v-model="serverkeys.publicKey">
+                </div>
+              </template>
+
+              <template v-else>
+                <h2 class="title is-4">对等配置</h2>
+                <div class="buttons">
+                  <button class="button is-primary" @click="updatePeerClients">
+                    <span class="icon"><i class="fas fa-sync"></i></span>
+                    <span>生成配置</span>
+                  </button>
+                  <button class="button is-warning" v-if="!peerDlbuttonshidden" @click="downloadPeerClients">
+                    <span class="icon"><i class="fas fa-download"></i></span>
+                    <span>下载客户端配置</span>
+                  </button>
+                  <button class="button is-danger" v-if="!peerDlbuttonshidden" @click="clearCache">
+                    <span class="icon"><i class="fas fa-trash"></i></span>
+                    <span>清空缓存</span>
+                  </button>
+                </div>
+
+                <div class="field is-grouped is-grouped-multiline">
+                  <div class="control">
+                    <label class="label">网络</label>
+                    <input class="input" v-model="peerNetwork" placeholder="10.0.0">
+                  </div>
+                  <div class="control">
+                    <label class="label">起始IP</label>
+                    <input class="input" v-model="peerStartip" placeholder="1">
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label class="checkbox">
+                    <input type="checkbox" v-model="peerUsePresharedKey">
+                    启用预共享密钥
+                  </label>
+                </div>
+
+                <div class="field">
+                  <label class="label">允许的网络</label>
+                  <input class="input" v-model="peerAllowednets" placeholder="192.168.1.0/24,192.168.0.0/24">
+                </div>
+
+                <div class="table-container">
+                  <table class="table is-fullwidth">
+                    <thead>
+                      <tr>
+                        <th>节点名称</th>
+                        <th>地址</th>
+                        <th>端口</th>
+                        <th style="width: 40px;"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(peer, index) in peerEndpoints" :key="index">
+                        <td>
+                          <input class="input" 
+                            :class="{'is-danger': !peer.name}"
+                            v-model="peer.name" 
+                            placeholder="节点名称"
+                            required>
+                        </td>
+                        <td>
+                          <input class="input" 
+                            :class="{'is-danger': !peer.address}"
+                            v-model="peer.address" 
+                            placeholder="vpn.example.com"
+                            required>
+                        </td>
+                        <td>
+                          <input class="input" 
+                            :class="{'is-danger': !peer.port}"
+                            v-model="peer.port" 
+                            placeholder="51820"
+                            required>
+                        </td>
+                        <td>
+                          <button class="button is-danger is-small" @click="removePeer(index)">
+                            <span class="icon is-small">
+                              <i class="fas fa-trash"></i>
+                            </span>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button class="button is-info is-small" @click="addPeer">
+                    <span class="icon is-small">
+                      <i class="fas fa-plus"></i>
+                    </span>
+                    <span>添加节点</span>
+                  </button>
+                </div>
+              </template>
             </div>
           </div>
 
-          <div class="card mt-4">
+          <div class="card mt-4" v-if="mode === 'server'">
             <div class="card-content">
               <h2 class="title is-4">服务器配置</h2>
               <div class="tab-content">
@@ -119,30 +287,55 @@
           <div class="card">
             <div class="card-content">
               <h2 class="title is-4">客户端配置</h2>
-              <div v-for="config in clientConfigs" class="client-config">
-                <div class="client-name">
-                  <input class="input" v-model="config.client.name" placeholder="客户端名称">
-                  <div class="buttons are-small">
-                    <button class="button is-info" @click="copyConfig(config.clientId)">
-                      <span class="icon"><i class="fas fa-copy"></i></span>
-                      <span>复制配置</span>
-                    </button>
-                    <button class="button is-danger" @click="deleteConfig(config.clientId)">
-                      <span class="icon"><i class="fas fa-trash"></i></span>
-                      <span>删除</span>
-                    </button>
+              <template v-if="mode === 'server'">
+                <div v-for="config in clientConfigs" class="client-config">
+                  <div class="client-name">
+                    <input class="input" v-model="config.client.name" placeholder="客户端名称">
+                    <div class="buttons are-small">
+                      <button class="button is-info" @click="copyConfig(config.clientId)">
+                        <span class="icon"><i class="fas fa-copy"></i></span>
+                        <span>复制配置</span>
+                      </button>
+                      <button class="button is-danger" @click="deleteConfig(config.clientId)">
+                        <span class="icon"><i class="fas fa-trash"></i></span>
+                        <span>删除</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="client-qr">
+                    <canvas :id="'canvas'+config.clientId"></canvas>
+                  </div>
+                  <div class="client-code">
+                    <client-config
+                      v-bind="config"
+                      @select="select"
+                    ></client-config>
                   </div>
                 </div>
-                <div class="client-qr">
-                  <canvas :id="'canvas'+config.clientId"></canvas>
+              </template>
+              <template v-else>
+                <div v-for="config in peerConfigs" class="client-config">
+                  <div class="client-name">
+                    <h3 class="subtitle">{{ config.name }}</h3>
+                    <div class="buttons are-small">
+                      <button class="button is-info" @click="copyConfig(config.id)">
+                        <span class="icon"><i class="fas fa-copy"></i></span>
+                        <span>复制配置</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="client-qr">
+                    <canvas :id="'peerCanvas'+config.id"></canvas>
+                  </div>
+                  <div class="client-code">
+                    <peer-config
+                      :config="config"
+                      :allowednets="peerAllowednets"
+                      @select="select"
+                    ></peer-config>
+                  </div>
                 </div>
-                <div class="client-code">
-                  <client-config
-                    v-bind="config"
-                    @select="select"
-                  ></client-config>
-                </div>
-              </div>
+              </template>
             </div>
           </div>
         </div>

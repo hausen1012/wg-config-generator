@@ -49,4 +49,27 @@ AllowedIPs = {{ network }}.0/24{{ allowednets ? ',' + allowednets : '' }}
 Endpoint = {{ server }}:{{ port }}
 PersistentKeepalive = 25</span></code></pre>
   `
+});
+
+Vue.component('peer-config', {
+  props: {
+    config: Object,
+    allowednets: String,
+  },
+  template: `
+    <pre><code :id="'peerCode'+config.id"><span @click="$emit('select', $event)">[Interface]
+## {{ config.name }}
+Address = {{ config.address }}
+PrivateKey = {{ config.privateKey }}
+
+<template v-for="peer in config.peers">[Peer]
+## {{ peer.name }}
+PublicKey = {{ peer.publicKey }}<template v-if="peer.presharedKey">
+PresharedKey = {{ peer.presharedKey }}</template>
+AllowedIPs = {{ peer.allowedIPs }}{{ allowednets ? ',' + allowednets : '' }}<template v-if="peer.endpoint">
+Endpoint = {{ peer.endpoint }}
+PersistentKeepalive = 25</template>
+
+</template></span></code></pre>
+  `
 }); 
