@@ -179,6 +179,10 @@
 				publicKey: keyToBase64(publicKey),
 				privateKey: keyToBase64(privateKey)
 			};
+		},
+		generatePresharedKey: function() {
+			var presharedKey = generatePresharedKey();
+			return keyToBase64(presharedKey);
 		}
 	};
 })();

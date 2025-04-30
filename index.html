@@ -72,8 +72,15 @@
                 </div>
                 <div class="control">
                   <label class="label">客户端数量</label>
-                  <input class="input" v-model="clientcount" placeholder="2">
+                  <input class="input" v-model="clientcount" placeholder="3">
                 </div>
+              </div>
+
+              <div class="field">
+                <label class="checkbox">
+                  <input type="checkbox" v-model="usePresharedKey">
+                  启用预共享密钥
+                </label>
               </div>
 
               <div class="field">
@@ -111,6 +118,7 @@ PrivateKey = {{ serverkeys.privateKey }}
 ## {{ value.name }}
 AllowedIPs = {{ network }}.{{ client }}/32
 PublicKey = {{ value.publicKey }}
+<template v-if="usePresharedKey">PresharedKey = {{ value.presharedKey }}</template>
 # PrivateKey = {{ value.privateKey }}
 </span></span></code></pre>
                 </div>
@@ -148,7 +156,8 @@ PrivateKey = {{ value.privateKey }}
 
 [Peer]
 PublicKey = {{ serverkeys.publicKey }}
-AllowedIPs = {{ network }}.0/24{{ allowednets ? ',' + allowednets : '' }}
+<template v-if="usePresharedKey">PresharedKey = {{ value.presharedKey }}
+</template>AllowedIPs = {{ network }}.0/24{{ allowednets ? ',' + allowednets : '' }}
 Endpoint = {{ server }}:{{ port }}
 PersistentKeepalive = 25</span></code></pre>
                 </div>

@@ -15,7 +15,8 @@ new Vue({
       clients: {},
       modalactive: null,
       dlbuttonshidden: true,
-      serverkeys: wireguard.generateKeypair()
+      serverkeys: wireguard.generateKeypair(),
+      usePresharedKey: false
     };
 
     if (savedData) {
@@ -109,18 +110,38 @@ new Vue({
       data.modalactive = null;
     },
     updateclients(event) {
-      this.clients = this.makeclients;
+      const newClients = {};
+      for (let client in [...Array(Math.floor(this.clientcount)).keys()]) {
+        const finaloctet = Math.floor(client) + Math.floor(this.startip);
+        const keypair = wireguard.generateKeypair();
+        newClients[finaloctet] = {
+          ...keypair,
+          name: "Client " + finaloctet
+        };
+        if (this.usePresharedKey) {
+          newClients[finaloctet].presharedKey = wireguard.generatePresharedKey();
+        }
+      }
+      this.clients = newClients;
       this.dlbuttonshidden = false;
       this.generateQRCodes();
     },
     downloadclients(event) {
       for (i = this.startip; i < this.startip + this.clientcount; i++) {
-        var allowedIPs = this.network + ".0/24";
-        if (this.allowednets && this.allowednets.trim()) {
-          allowedIPs += "," + this.allowednets;
-        }
-        var blob = new Blob(["[Interface]\n## "+this.clients[i].name+"\nAddress = "+this.network+"."+i+"/24\nPrivateKey = "+this.clients[i].privateKey+"\n\n[Peer]\nPublicKey =  "+this.serverkeys.publicKey+"\nAllowedIPs = "+allowedIPs+"\nEndpoint = "+this.server+":"+this.port+" \nPersistentKeepalive = 25"], {
-            type: "text/plain;charset=utf-8;",
+        const presharedKeyLine = this.usePresharedKey ? `PresharedKey = ${this.clients[i].presharedKey}\n` : '';
+        let config = `[Interface]
+## ${this.clients[i].name}
+Address = ${this.network}.${i}/32
+PrivateKey = ${this.clients[i].privateKey}
+
+[Peer]
+PublicKey = ${this.serverkeys.publicKey}
+${presharedKeyLine}AllowedIPs = ${this.network}.0/24${this.allowednets ? ',' + this.allowednets : ''}
+Endpoint = ${this.server}:${this.port}
+PersistentKeepalive = 25`;
+
+        var blob = new Blob([config], {
+          type: "text/plain;charset=utf-8",
         });
         saveAs(blob, this.clients[i].name + ".conf");
       }
@@ -157,9 +178,13 @@ new Vue({
         clients: this.clients,
         dlbuttonshidden: this.dlbuttonshidden,
         serverkeys: this.serverkeys,
-        modalactive: this.modalactive
+        modalactive: this.modalactive,
+        usePresharedKey: this.usePresharedKey
       };
       localStorage.setItem('vpnConfigData', JSON.stringify(dataToSave));
+    },
+    generatePresharedKey() {
+      return wireguard.generatePresharedKey();
     }
   },
   computed: {
@@ -193,7 +218,8 @@ new Vue({
     serverkeys: {
       handler(val) { this.saveData(); },
       deep: true
-    }
+    },
+    usePresharedKey(val) { this.saveData(); }
   }
 });
 
