@@ -20,7 +20,7 @@ new Vue({
 
     const defaultPeerData = {
       peerNetwork: "10.0.0",
-      peerStartip: 2,
+      peerStartip: 1,
       peerUsePresharedKey: true,
       peerAllowednets: "",
       peerEndpoints: [
